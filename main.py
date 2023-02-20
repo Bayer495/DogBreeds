@@ -2,16 +2,15 @@ import zipfile
 import os
 import cv2
 import numpy as np
-import pandas as pd
 from sklearn.utils import shuffle
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from sklearn.metrics import classification_report
 
-DIRECTORY = r"C:\"
+DIRECTORY = r"C:\bak\Data\new"
 CATEGORY = ["seg_train", "seg_test"]
 IMAGE_SIZE = (150, 150)
-class_names = ['Corgi', 'Huski', 'Shibu']
+class_names = ['Corgi', 'Husky', 'Shiba']
 class_names_label = {class_name: i for i, class_name in enumerate(class_names)}
 nb_classes = len(class_names)
 
@@ -22,7 +21,7 @@ def load_data() :
     output = []
 
     for category in CATEGORY:
-        path = path.join(DIRECTORY, category)
+        path = os.path.join(DIRECTORY, category)
         images = []
         labels = []
 
@@ -31,11 +30,11 @@ def load_data() :
         for folder in os.listdir(path):
             label = class_names_label[folder]
 
-            for file in os.listdir(path.join(path, folder)):
-                img_path = path.join(path.join(path, folder), file)
+            for file in os.listdir(os.path.join(path, folder)):
+                img_path = os.path.join(os.path.join(path, folder), file)
 
                 # open and resize the img
-                image = cv2.imred(img_path)
+                image = cv2.imread(img_path)
                 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
                 image = cv2.resize(image, IMAGE_SIZE)
 
@@ -97,7 +96,7 @@ model = init_network_model()
 history = model.fit(train_images,
                     train_labels,
                     batch_size=20,
-                    epochs=20,
+                    epochs=13,
                     validation_split=0.2)
 
 # evaluate network efficiency
@@ -106,8 +105,8 @@ test_loss = model.evaluate(test_images, test_labels)
 # vector of probabilities
 predictions = model.predict(test_images)
 # we take the highest probability
-pred_labels = np.argmax(predictions, axis= 1)
+pred_labels = np.argmax(predictions, axis=1)
 print(classification_report(test_labels, pred_labels))
 plot_accuracy_loss(history)
 
-model.save(os.path.join(DIRECTORY, "dogs_neural"))
+model.save(os.path.join(DIRECTORY, "dogs_neural.h5"))
