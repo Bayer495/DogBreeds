@@ -1,15 +1,18 @@
 import zipfile
 import os
 import cv2
+import keras.initializers.initializers
 import numpy as np
+from keras.applications import InceptionResNetV2
 from sklearn.utils import shuffle
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from sklearn.metrics import classification_report
+from keras import optimizers
 
-DIRECTORY = r"C:\bak\Data\new"
+DIRECTORY = r"C:\bak\Data\New_folder"
 CATEGORY = ["seg_train", "seg_test"]
-IMAGE_SIZE = (150, 150)
+IMAGE_SIZE = (224, 224)
 class_names = ['Corgi', 'Husky', 'Shiba']
 class_names_label = {class_name: i for i, class_name in enumerate(class_names)}
 nb_classes = len(class_names)
@@ -17,7 +20,7 @@ nb_classes = len(class_names)
 print (class_names_label)
 
 
-def load_data() :
+def load_image_data() :
     output = []
 
     for category in CATEGORY:
@@ -73,7 +76,7 @@ def plot_accuracy_loss(history):
 
 def init_network_model():
     model = tf.keras.Sequential([
-        tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=(150, 150, 3)),
+        tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=(224, 224, 3)),
         tf.keras.layers.MaxPooling2D(2, 2),
         tf.keras.layers.Conv2D(32, (3, 3), activation='relu'),
         tf.keras.layers.MaxPooling2D(2, 2),
@@ -82,11 +85,12 @@ def init_network_model():
         tf.keras.layers.Dense(3, activation=tf.nn.softmax)
     ])
 
-    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
-    return  model
+    model.compile(optimizer='adam', loss="sparse_categorical_crossentropy", metrics=["accuracy"])
 
-(train_images, train_labels), (test_images, test_labels) = load_data()
+    return model
+
+(train_images, train_labels), (test_images, test_labels) = load_image_data()
 train_images, train_labels = shuffle(train_images, train_labels, random_state=25)
 
 # init network
@@ -95,8 +99,7 @@ model = init_network_model()
 # fit network
 history = model.fit(train_images,
                     train_labels,
-                    batch_size=20,
-                    epochs=13,
+                    epochs=30,
                     validation_split=0.2)
 
 # evaluate network efficiency

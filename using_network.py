@@ -1,44 +1,43 @@
-from tensorflow import keras
+from keras.models import load_model
+from PIL import Image, ImageOps
 import numpy as np
-from keras.utils import load_img, img_to_array
-import tensorflow as tf
-import cv2
 
-
-#from keras.applications.imagenet_utils import decode_predictions
-#from keras.applications.resnet import preprocess_input, decode_predictions
-
-MODEL_PATH = r'C:\bak\Data\new\dogs_neural.h5'
-IMG_PATH = r'C:\bak\Data\new\c7.jpg'
-IMAGE_SIZE = (150, 150)
+MODEL_PATH = r'C:\Data\dogs_neural.h5'
+IMG_PATH = r'C:\Data\h.1.jpg'
 class_names = ['Corgi', 'Husky', 'Shiba']
-class_names_label = {class_name: i for i, class_name in enumerate(class_names)}
 
-images = []
-image = cv2.imread(IMG_PATH)
-image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-image = cv2.resize(image, IMAGE_SIZE)
-images.append(image)
+# Disable scientific notation for clarity
+np.set_printoptions(suppress=True)
 
-images = np.array(images, dtype='float32')
+# Load the model
+model = load_model(MODEL_PATH, compile=False)
+model.summary()
+model.get_layer(index=1).summary()
 
-# img = load_img(IMG_PATH, target_size=(150, 150))
-# img_array = img_to_array(img)
-# img_batch = np.expand_dims(img_array, axis=0)
-# img_preprocessed = tf.keras.applications.resnet50.preprocess_input(img_batch)
+data = np.ndarray(shape=(1, 224, 224, 3), dtype=np.float32)
 
-model = keras.models.load_model(MODEL_PATH)
-prediction = model.predict(images)
+# Open image
+image = Image.open(IMG_PATH).convert("RGB")
 
-# decoded = tf.keras.applications.resnet50.decode_predictions(prediction, top=3)
-#
-# print(tf.keras.applications.resnet50.decode_predictions(prediction, top=3)[0])
+# resizing the image to be at least 224x224 and then cropping from the center
+size = (224, 224)
+image = ImageOps.fit(image, size, Image.Resampling.LANCZOS)
 
-pred_label = np.argmax(prediction, axis=1)
-print(f"label {pred_label[0]}")
-print(class_names[pred_label[0]])
+# turn the image into a numpy array
+image_array = np.asarray(image)
 
-# prediction = np.argmax(prediction)
-#
-# print("Номер класса:", prediction)
-# print("Название класса:", class_names[prediction])
+# Normalize the image
+normalized_image_array = (image_array.astype(np.float32) / 127.5) - 1
+
+# Load the image into the array
+data[0] = normalized_image_array
+
+# Predicts the model
+prediction = model.predict(data)
+index = np.argmax(prediction)
+class_name = class_names[index]
+confidence_score = prediction[0][index]
+
+# Print prediction and confidence score
+print(f"Class:{class_name}")
+print(f"Confidence Score:{confidence_score}")
